@@ -1,16 +1,32 @@
-import nmap
+from socket import *
+import ipaddress
+import sys
 
-first = int(input("First port: "))
-last = int(input("Last port: "))
 
-target = "127.0.0.1"
+def runScanOneArg(ipAddress):
+    print(ipAddress)
 
-scanner = nmap.PortScanner()
+    for i in range(0, 1000):
+        s = socket(AF_INET, SOCK_STREAM)
 
-for i in range(first, last+1):
+        s.settimeout(0.001)
+        conn = s.connect_ex((ipAddress, i))
+        s.settimeout(None)
 
-    res = scanner.scan(target, str(i))
+        if conn == 0:
+            print(f'* {i}/tcp open')
+        s.close()
 
-    res = res['scan'][target]['tcp'][i]['state']
 
-    print(f'port {i} is {res}')
+def runScanTwoArgs(firstIpAddress, secondIpAddress):
+    firstIPv4 = ipaddress.IPv4Address(firstIpAddress)
+    secondIPv4 = ipaddress.IPv4Address(secondIpAddress)
+
+    for ip_int in range(int(firstIPv4), int(secondIPv4) + 1):
+        runScanOneArg(str(ipaddress.IPv4Address(ip_int)))
+
+
+if len(sys.argv) == 3:
+    runScanTwoArgs(sys.argv[1], sys.argv[2])
+else:
+    runScanOneArg(sys.argv[1])
