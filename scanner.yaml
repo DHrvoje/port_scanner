@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: networkscanner-pod
+  labels:
+    run: connectApi
+spec:
+  containers:
+    - name: client
+      image: hrvojed/networkscanner
+      ports:
+        - containerPort: 5000
+  restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-port
+spec:
+  type: NodePort
+  ports:
+    - port: 5050
+      targetPort: 5000
+      nodePort: 32020
+  selector:
+    run: connectApi
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scanner
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: batch-container
+            imagePullPolicy: Always
+            image: hrvojed/networkscanner
+            command: ["python3", "networkScanner.py", "192.168.0.2", "192.168.0.4"]
+          restartPolicy: OnFailure
